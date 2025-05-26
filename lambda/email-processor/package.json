@@ -4,8 +4,7 @@
   "description": "Lambda function to process incoming emails and send SMS notifications.",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
-    "synth": "cdk synth"
+    "build": "tsc"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.0.0",

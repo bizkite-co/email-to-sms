@@ -1,41 +1,45 @@
-# Implement Environment Variable Configuration
+# Implement Email to SMS Notification System - Task 3: Develop Lambda Function
 
-This task involves modifying Roo-Code to use environment variables for configuration, specifically starting with custom prompts and modes.
+This task is the third step in implementing the Email to SMS Notification System as outlined in [plan.md](plan.md).
 
-## Objective
+**Objective:** Develop an AWS Lambda function that will be triggered by SES, parse the email sender, check against the approved senders list in S3, and send an SMS via Pinpoint if the sender is approved.
 
-Introduce a hierarchical configuration system using `.roo.env` files to manage the locations of `roo-rules`, custom modes, custom system prompts, and mode-specific settings.
+**Steps:**
 
-## Plan
+1.  Navigate to the CDK project directory `/home/mstouffer/repos/email-to-sms`.
+2.  Create a new directory for the Lambda function code (e.g., `lambda/email-processor`).
+3.  Write the Lambda function code (e.g., `index.ts` or `index.py`) to:
+    *   Accept the SES email event as input.
+    *   Extract the sender's email address from the event.
+    *   Read the `approved-senders.txt` file from the S3 bucket (defined in Task 2).
+    *   Parse the S3 file content to get the list of approved senders.
+    *   Check if the extracted sender email is in the approved list.
+    *   If approved, use the AWS SDK (Pinpoint client) to send an SMS to the target phone number.
+    *   Include error handling and logging to CloudWatch.
+4.  In the main stack file (`lib/email-to-sms-stack.ts`), define the Lambda function resource, pointing to the code created in step 3.
+5.  Configure the Lambda with necessary environment variables (e.g., Pinpoint Application ID, target phone number, S3 bucket name).
+6.  Grant the Lambda function the necessary IAM permissions (as outlined in the plan): `s3:GetObject` and `mobiletargeting:SendMessages`.
+7.  Synthesize the CDK application (`cdk synth`) to verify the CloudFormation template includes the Lambda function and its permissions.
 
-1.  **Concept:** Implement a mechanism to read and merge settings from a global `~/.config/.roo.env` file and a workspace-specific `/home/mstouffer/repos/GitHub/RooVetGit/Roo-Code/.roo.env` file, with the workspace file overriding global settings.
-2.  **Initial Focus:** Begin by implementing support for environment variables related to custom system prompts (`ROO_SYSTEM_PROMPT_PATH`) and custom modes (`ROO_CUSTOM_MODES_PATH`).
-3.  **Implementation Steps:**
-    *   Develop or integrate a configuration loading utility that handles the hierarchical reading of `.roo.env` files.
-    *   Update the Roo-Code codebase to use the loaded configuration values for custom prompt and mode file locations instead of hardcoded paths.
-    *   Ensure graceful fallback to default behavior if environment variables are not set or files are not found.
-    *   (Future steps will include adding support for roo-rules and mode-specific settings).
+Once the Lambda function is developed and configured, the next task will be to configure the SES Receipt Rule.
 
-## Context
+## Task 3 Status
 
-*   A high-level plan is outlined in `plan.md`.
-*   Existing export features in `src/exports/api.ts` might provide some relevant context on how settings or paths are currently handled.
+### Achievements
 
-## Next Steps (in Design Engineer mode)
+- Created the `lambda/email-processor` directory within the email-to-sms project.
+- Developed the Lambda function code (`lambda/email-processor/index.ts`) to process SES events, read approved senders from S3, and publish SMS notifications to an SNS topic, as requested.
+- Created `package.json` and `tsconfig.json` files for the Lambda function's dependencies and TypeScript compilation.
+- Updated the main CDK stack file (`lib/app-stack.ts`) to define the Lambda function resource, configure environment variables (`APPROVED_SENDERS_BUCKET` and `SNS_TOPIC_ARN`), and grant the required IAM permissions (`s3:GetObject` on the S3 bucket and `sns:Publish` on the SNS topic).
+- Created the missing CDK application entry point file (`bin/app.ts`).
+- Updated the project root `tsconfig.json` to include the `bin` and `lib` directories for TypeScript compilation.
 
-*   Analyze existing configuration loading mechanisms in Roo-Code.
-*   Determine the best approach for reading `.roo.env` files and merging configurations.
-*   Identify the specific code locations that need modification to use the new environment variables for custom prompts and modes.
-*   Implement the necessary code changes.
-*   Add tests for the new configuration loading and usage.
+### Current Issues
 
-## Completed Work
+- The `npm run synth` command, which synthesizes the CDK application, consistently fails with a TypeScript compilation error (`Cannot find module 'aws-cdk-lib'`) in the `bin/app.ts` file. The underlying cause of this compilation issue within the CDK environment remains unresolved, preventing successful synthesis and verification of the CloudFormation template.
 
-- Implemented a utility function `loadEnvConfig` in `src/utils/config/envConfig.ts` to read and merge environment variables from `~/.config/.roo.env` and `.roo.env` in the workspace root.
-- Modified `src/extension.ts` to call `loadEnvConfig` during activation and store the resulting configuration.
-- Updated the `ClineProvider` in `src/core/webview/ClineProvider.ts` to accept the environment configuration and use `ROO_SYSTEM_PROMPT_PATH` for loading custom system prompts.
-- Updated the `CustomModesManager` in `src/core/config/CustomModesManager.ts` to use `ROO_CUSTOM_MODES_PATH` for loading custom modes.
-- Added `"env"` as a possible source for mode configuration in the `ModeConfig` schema in `src/schemas/index.ts`.
-- Created an `example.roo.env` file with commented-out examples of all possible configuration keys that can be set via `.roo.env`.
-- Resolved all TypeScript errors introduced during the implementation.
-- Defined an S3 bucket (`ApprovedSendersBucket`) in `/home/mstouffer/repos/email-to-sms/lib/app-stack.ts` using AWS CDK. Configured `removalPolicy: DESTROY` and `autoDeleteObjects: true` for development. Added a CDK Output for the bucket name. Verified with `cdk synth`.
+### Next Steps
+
+- Investigate and resolve the `cdk synth` TypeScript compilation error in the email-to-sms project.
+- Successfully synthesize the CDK application to generate the CloudFormation template.
+- Proceed to Task 4: Configure the SES Receipt Rule to trigger the Lambda function.
