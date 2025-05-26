@@ -1,16 +1,21 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 
 export class AppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    // Define S3 bucket for approved sender email addresses
+    const approvedSendersBucket = new s3.Bucket(this, 'ApprovedSendersBucket', {
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // Allows easy cleanup during development
+      autoDeleteObjects: true, // Automatically deletes objects when bucket is destroyed
+    });
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'AppQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    // Output the bucket name
+    new cdk.CfnOutput(this, 'ApprovedSendersBucketName', {
+      value: approvedSendersBucket.bucketName,
+      description: 'Name of the S3 bucket for approved sender email addresses',
+    });
   }
 }
